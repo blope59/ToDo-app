@@ -74,6 +74,7 @@ li .button-group button:nth-child(2) {
 /* Input and add button */
 #inputContainer {
     display: flex;
+    gap: 10px;
     justify-content: space-between;
     margin-bottom: 20px;
 }
@@ -102,4 +103,26 @@ button#addTaskBtn {
 button#addTaskBtn:hover {
   opacity: 0.85;
   transform: scale(1.05);
+}
+
+.due-date {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  background-color: #eef2ff;  /* soft highlight */
+  color: #333;
+}
+
+.overdue {
+  background-color: #ffe4e4;
+  color: #b30000;
+  font-weight: bold;
+}
+
+.due-today {
+  background-color: #fff2cc;  /* light yellow */
+  color: #b37400;
+  font-weight: bold;
 }
