@@ -126,3 +126,34 @@ button#addTaskBtn:hover {
   color: #b37400;
   font-weight: bold;
 }
+h3.today {
+  background-color: #fff2cc; /* light yellow */
+  color: #b37400;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+h3.tomorrow {
+  background-color: #e0f7fa; /* soft teal */
+  color: #00796b;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+h3.upcoming {
+  background-color: #f0f0f0; /* light gray */
+  color: #555;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+h3.no-date {
+  background-color: #f9f9f9; /* very subtle */
+  color: #666;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+}

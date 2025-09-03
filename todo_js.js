@@ -17,75 +17,106 @@ function renderTasks() {
   const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
 
+  let now = new Date();
+  let startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let startOfTomorrow = new Date(startOfToday);
+  startOfTomorrow.setDate(startOfToday.getDate() + 1);
+  let startOfDayAfterTomorrow = new Date(startOfToday);
+  startOfDayAfterTomorrow.setDate(startOfToday.getDate() + 2);
+
+  //Grouping section
+  let sections = {
+    "Today": [],
+    "Tomorrow": [],
+    "Upcoming": [],
+    "No Date": []
+  };
+
   //sort incomplete then complete
   let sortedTasks = [...tasks].sort((a, b) => {
     // Move completed tasks to bottom
     if (a.done && !b.done) return 1;
     if (!a.done && b.done) return -1;
 
-    // Both done, compare due dates
-    if (a.date && b.date){
-    let dateA = new Date(`${a.date}T${a.time}`);
-    let dateB = new Date(`${b.date}T${b.time}`);
-    return dateA - dateB; 
-    }
+    if (a.date && b.date) {
+      let [yA, mA, dA] = a.date.split("-").map(Number);
+      let [hA, minA] = a.time.split(":").map(Number);
+      let dateA = new Date(yA, mA - 1, dA, hA, minA);
 
+      let [yB, mB, dB] = b.date.split("-").map(Number);
+      let [hB, minB] = b.time.split(":").map(Number);
+      let dateB = new Date(yB, mB - 1, dB, hB, minB);
+
+      return dateA - dateB;
+    }
+    if (a.date) return -1;
+    if (b.date) return 1;
     return 0;
   });
 
-  sortedTasks.forEach((task, index) => {
-    let li = document.createElement("li");
+  // Group tasks
+  sortedTasks.forEach((task) => {
+    if (!task.date) {
+      sections["No Date"].push(task);
+    } else {
+      let [y, m, d] = task.date.split("-").map(Number);
+      let [h, min] = task.time.split(":").map(Number);
+      let taskDate = new Date(y, m - 1, d, h, min);
 
-    // Task 
-    let span = document.createElement("span");
-    span.textContent = task.name;
-    if (task.done) {
-      span.classList.add("done");
-    }
-    li.appendChild(span);
-
-  // Due date/time (if available)
-    if (task.date && task.time) {
-      let due = document.createElement("span");
-      due.classList.add("due-date");
-      
-      // Format date and time 
-      let dueDateTime = new Date(`${task.date}T${task.time}`);
-      let options = { month: "short", day: "numeric", year: "numeric" };
-      let formattedDate = dueDateTime.toLocaleDateString(undefined, options);
-      let formattedTime = dueDateTime.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-      due.textContent = `📅 ${formattedDate} ⏰ ${formattedTime}`;
-
-      let now = new Date();
-      let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      // Highlight overdue tasks
-      if (new Date() > dueDateTime && !task.done) {
-        due.classList.add("overdue");
+      if (taskDate >= startOfToday && taskDate < startOfTomorrow) {
+        sections["Today"].push(task);
+      } else if (taskDate >= startOfTomorrow && taskDate < startOfDayAfterTomorrow) {
+        sections["Tomorrow"].push(task);
+      } else {
+        sections["Upcoming"].push(task);
       }
-
-      //Highlight due today
-      else if (
-        dueDateTime >= today &&
-        dueDateTime < new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) && !task.done
-      ) {
-      due.classList.add("due-today");
     }
-      
+  });
 
-      li.appendChild(due);
-    }  
+// Render sections
+  Object.keys(sections).forEach(sectionName => {
+    if (sections[sectionName].length === 0) return;
+
+    // Group header
+    let header = document.createElement("h3");
+    header.textContent = sectionName;
+    header.classList.add(sectionName.toLowerCase().replace(" ", "-"));
+    taskList.appendChild(header);
+
+    sections[sectionName].forEach(task => {
+      let li = document.createElement("li");
+
+      //Task name
+      let span = document.createElement("span");
+      span.textContent = task.name;
+      if (task.done) span.classList.add("done");
+      li.appendChild(span);
+
+    // Due time
+      if (task.date && task.time) {
+        let due = document.createElement("span");
+        due.classList.add("due-date");
+
+        let [y, m, d] = task.date.split("-").map(Number);
+        let [h, min] = task.time.split(":").map(Number);
+        let dueDateTime = new Date(y, m - 1, d, h, min);
+
+        let formattedTime = dueDateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        due.textContent = `⏰ ${formattedTime}`;
+
+        // Highlight overdue / today
+        if (!task.done && dueDateTime < now) due.classList.add("overdue");
+        else if (!task.done && sectionName === "Today") due.classList.add("due-today");
+
+        li.appendChild(due);
+      }
     
     // Buttons
     let buttonGroup = document.createElement("div");
     buttonGroup.classList.add("button-group");
 
     let completeBtn = document.createElement("button");
-    completeBtn.textContent = "Complete";
+    completeBtn.textContent = task.done ? "Undo" : "Complete";
     completeBtn.onclick = () => completeTask(tasks.indexOf(task));
     buttonGroup.appendChild(completeBtn);
 
@@ -96,6 +127,7 @@ function renderTasks() {
 
     li.appendChild(buttonGroup);
     taskList.appendChild(li);
+    });
   });
 }
 
@@ -125,7 +157,7 @@ function addTask() {
 }
 
 function completeTask(index) {
-  tasks[index].done = true;
+  tasks[index].done = !tasks[index].done;
   saveTasks();     // save after marking complete
   renderTasks();
 }
@@ -135,3 +167,5 @@ function deleteTask(index) {
   saveTasks();     // save after deleting
   renderTasks();
 }
+
+// tomorrow fix upcoming section so it shows dates 
