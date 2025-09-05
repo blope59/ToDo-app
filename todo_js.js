@@ -1,6 +1,6 @@
 let tasks = [];
 
-// Load saved tasks when the page opens
+// Load saved tasks on page load
 window.onload = () => {
   const savedTasks = localStorage.getItem("tasks");
   if (savedTasks) {
@@ -13,42 +13,83 @@ function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
+function addTask() {
+  const input = document.getElementById("taskInput");
+  const dateInput = document.getElementById("dateInput");
+  const timeInput = document.getElementById("timeInput");
+  const priorityInput = document.getElementById("priorityInput");
+
+  if (input.value.trim() === "") {
+    alert("Please enter a task name.");
+    return;
+  }
+
+  tasks.push({
+    id: crypto.randomUUID(),    // optional unique ID for future features
+    name: input.value.trim(),
+    date: dateInput.value || null,
+    time: timeInput.value || null,
+    priority: priorityInput.value || "Medium",
+    done: false
+  });
+
+  input.value = "";
+  dateInput.value = "";
+  timeInput.value = "";
+  priorityInput.value = "Medium";
+
+  saveTasks();
+  renderTasks();
+}
+
+function completeTask(index) {
+  tasks[index].done = !tasks[index].done;
+  saveTasks();
+  renderTasks();
+}
+
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  saveTasks();
+  renderTasks();
+}
+
 function renderTasks() {
   const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
 
-  let now = new Date();
-  let startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let startOfTomorrow = new Date(startOfToday);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTomorrow = new Date(startOfToday);
   startOfTomorrow.setDate(startOfToday.getDate() + 1);
-  let startOfDayAfterTomorrow = new Date(startOfToday);
+  const startOfDayAfterTomorrow = new Date(startOfToday);
   startOfDayAfterTomorrow.setDate(startOfToday.getDate() + 2);
 
-  //Grouping section
-  let sections = {
+  const sections = {
+    "Overdue": [],
     "Today": [],
     "Tomorrow": [],
     "Upcoming": [],
     "No Date": []
   };
 
-  //sort incomplete then complete
-  let sortedTasks = [...tasks].sort((a, b) => {
-    // Move completed tasks to bottom
+  // Sort tasks: incomplete first, then complete, then by date
+  const sortedTasks = [...tasks].sort((a, b) => {
     if (a.done && !b.done) return 1;
     if (!a.done && b.done) return -1;
 
     if (a.date && b.date) {
-      let [yA, mA, dA] = a.date.split("-").map(Number);
-      let [hA, minA] = a.time.split(":").map(Number);
-      let dateA = new Date(yA, mA - 1, dA, hA, minA);
+      const [yA, mA, dA] = a.date.split("-").map(Number);
+      const [hA, minA] = (a.time || "00:00").split(":").map(Number);
+      const dateA = new Date(yA, mA - 1, dA, hA, minA);
 
-      let [yB, mB, dB] = b.date.split("-").map(Number);
-      let [hB, minB] = b.time.split(":").map(Number);
-      let dateB = new Date(yB, mB - 1, dB, hB, minB);
+      const [yB, mB, dB] = b.date.split("-").map(Number);
+      const [hB, minB] = (b.time || "00:00").split(":").map(Number);
+      const dateB = new Date(yB, mB - 1, dB, hB, minB);
 
       return dateA - dateB;
     }
+
     if (a.date) return -1;
     if (b.date) return 1;
     return 0;
@@ -59,11 +100,13 @@ function renderTasks() {
     if (!task.date) {
       sections["No Date"].push(task);
     } else {
-      let [y, m, d] = task.date.split("-").map(Number);
-      let [h, min] = task.time.split(":").map(Number);
-      let taskDate = new Date(y, m - 1, d, h, min);
+      const [y, m, d] = task.date.split("-").map(Number);
+      const [h, min] = (task.time || "00:00").split(":").map(Number);
+      const taskDate = new Date(y, m - 1, d, h, min);
 
-      if (taskDate >= startOfToday && taskDate < startOfTomorrow) {
+      if (!task.done && taskDate < startOfToday) {
+        sections["Overdue"].push(task);
+      } else if (taskDate >= startOfToday && taskDate < startOfTomorrow) {
         sections["Today"].push(task);
       } else if (taskDate >= startOfTomorrow && taskDate < startOfDayAfterTomorrow) {
         sections["Tomorrow"].push(task);
@@ -73,99 +116,102 @@ function renderTasks() {
     }
   });
 
-// Render sections
+  // Render sections
   Object.keys(sections).forEach(sectionName => {
     if (sections[sectionName].length === 0) return;
 
-    // Group header
-    let header = document.createElement("h3");
+    const header = document.createElement("h3");
     header.textContent = sectionName;
     header.classList.add(sectionName.toLowerCase().replace(" ", "-"));
     taskList.appendChild(header);
 
     sections[sectionName].forEach(task => {
-      let li = document.createElement("li");
+      const li = document.createElement("li");
 
-      //Task name
-      let span = document.createElement("span");
+      // Task name
+      const span = document.createElement("span");
       span.textContent = task.name;
-      if (task.done) span.classList.add("done");
+      if (task.done) span.classList.add("done"); 
       li.appendChild(span);
 
-    // Due time
-      if (task.date && task.time) {
-        let due = document.createElement("span");
+      // Priority badge
+      if (task.priority && task.priority !== "") {
+        const priorityBadge = document.createElement("span");
+
+        // Icons for priority
+        const icons = { High: "🔺", Medium: "🔸", Low: "🔹" };
+        priorityBadge.textContent = icons[task.priority] || "";
+
+        // Apply both general and specific priority classes
+        priorityBadge.classList.add("priority", task.priority.toLowerCase());
+
+        li.appendChild(priorityBadge);
+      }
+
+      // Due date/time
+      if (task.date) {
+        const due = document.createElement("span");
         due.classList.add("due-date");
 
-        let [y, m, d] = task.date.split("-").map(Number);
-        let [h, min] = task.time.split(":").map(Number);
-        let dueDateTime = new Date(y, m - 1, d, h, min);
+        const [y, m, d] = task.date.split("-").map(Number);
+        const [h, min] = (task.time || "00:00").split(":").map(Number);
+        const dueDateTime = new Date(y, m - 1, d, h, min);
 
-        let formattedTime = dueDateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        due.textContent = `⏰ ${formattedTime}`;
+        let formatted;
+if (dueDateTime.getFullYear() === now.getFullYear()) {
+  // If the task is in the current year, omit the year
+  formatted = dueDateTime.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+} else {
+  // Include year for future years
+  formatted = dueDateTime.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
 
-        // Highlight overdue / today
+
+        due.textContent = `⏰ ${formatted}`;
+
+        // Highlight overdue / today / upcoming
         if (!task.done && dueDateTime < now) due.classList.add("overdue");
         else if (!task.done && sectionName === "Today") due.classList.add("due-today");
+        else if (!task.done && sectionName === "Upcoming") due.classList.add("upcoming");
 
         li.appendChild(due);
       }
-    
-    // Buttons
-    let buttonGroup = document.createElement("div");
-    buttonGroup.classList.add("button-group");
 
-    let completeBtn = document.createElement("button");
-    completeBtn.textContent = task.done ? "Undo" : "Complete";
-    completeBtn.onclick = () => completeTask(tasks.indexOf(task));
-    buttonGroup.appendChild(completeBtn);
+      // Buttons
+      const buttonGroup = document.createElement("div");
+      buttonGroup.classList.add("button-group");
 
-    let deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "Delete";
-    deleteBtn.onclick = () => deleteTask(tasks.indexOf(task));
-    buttonGroup.appendChild(deleteBtn);
+      const completeBtn = document.createElement("button");
+      completeBtn.textContent = task.done ? "Undo" : "Complete";
+      completeBtn.onclick = () => completeTask(tasks.indexOf(task));
+      buttonGroup.appendChild(completeBtn);
 
-    li.appendChild(buttonGroup);
-    taskList.appendChild(li);
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Delete";
+      deleteBtn.onclick = () => deleteTask(tasks.indexOf(task));
+      buttonGroup.appendChild(deleteBtn);
+
+      li.appendChild(buttonGroup);
+      taskList.appendChild(li);
     });
   });
 }
 
-function addTask() {
-  const input = document.getElementById("taskInput");
-  const dateInput = document.getElementById("dateInput");
-  const timeInput = document.getElementById("timeInput");
-
-  if (input.value.trim() !== "" && dateInput.value && timeInput.value) {
-    tasks.push({
-      name: input.value,
-      date: dateInput.value,
-      time: timeInput.value,
-      done: false
-    });
-
-    // Clear inputs
-    input.value = "";
-    dateInput.value = "";
-    timeInput.value = "";
-
-    saveTasks();   // save after adding
-    renderTasks();
-  } else {
-    alert("Please enter task, date, and time.");
-  }
-}
-
-function completeTask(index) {
-  tasks[index].done = !tasks[index].done;
-  saveTasks();     // save after marking complete
+function clearCompleted() {
+  tasks = tasks.filter(task => !task.done);
+  saveTasks();
   renderTasks();
 }
 
-function deleteTask(index) {
-  tasks.splice(index, 1);
-  saveTasks();     // save after deleting
-  renderTasks();
-}
-
-// tomorrow fix upcoming section so it shows dates 
+// fix the priority icon issue 

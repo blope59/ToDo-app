@@ -7,14 +7,23 @@
 </head>
 <body>
   <h1>To-Do List</h1>
-    <div id="inputContainer">
-      <input id="taskInput" type="text" placeholder="Enter a new task">
-      <input type="date" id="dateInput">
-      <input type="time" id="timeInput">
-      <button id="addTaskBtn" onclick="addTask()">Add Task</button>
-    </div>
+  <div id="inputContainer">
+    <input id="taskInput" type="text" placeholder="Enter a new task">
+    <input type="date" id="dateInput">
+    <input type="time" id="timeInput">
+    <select id="priorityInput">
+      <option value="">No Priority</option>
+      <option vlaue="Low">Low</option>
+      <option value="Medium" selected>Medium</option>
+      <option value="High">High</option>
+    </select>
+    <button id="addTaskBtn" onclick="addTask()">Add Task</button>
+    <button id="clearCompletedBtn" onclick="clearCompleted()">Clear Completed</button>
+    
+  </div>
+
   <ul id="taskList"></ul>
-  
+
   <script src="todo_js.js"></script>
 </body>
 </html>
