@@ -17,7 +17,7 @@ function addTask() {
   const input = document.getElementById("taskInput");
   const dateInput = document.getElementById("dateInput");
   const timeInput = document.getElementById("timeInput");
-  const priorityInput = document.getElementById("priorityInput");
+  const importantInput = document.getElementById("importantInput");
 
   if (input.value.trim() === "") {
     alert("Please enter a task name.");
@@ -29,14 +29,14 @@ function addTask() {
     name: input.value.trim(),
     date: dateInput.value || null,
     time: timeInput.value || null,
-    priority: priorityInput.value || "Medium",
+    important: importantInput.checked,
     done: false
   });
 
   input.value = "";
   dateInput.value = "";
   timeInput.value = "";
-  priorityInput.value = "Medium";
+  importantInput.checked = false;
 
   saveTasks();
   renderTasks();
@@ -75,6 +75,10 @@ function renderTasks() {
 
   // Sort tasks: incomplete first, then complete, then by date
   const sortedTasks = [...tasks].sort((a, b) => {
+
+    if (a.important && !b.important) return -1;
+    if (!a.important && b.important) return 1;
+
     if (a.done && !b.done) return 1;
     if (!a.done && b.done) return -1;
 
@@ -92,6 +96,7 @@ function renderTasks() {
 
     if (a.date) return -1;
     if (b.date) return 1;
+
     return 0;
   });
 
@@ -128,25 +133,16 @@ function renderTasks() {
     sections[sectionName].forEach(task => {
       const li = document.createElement("li");
 
+      // Highlight important
+      if (task.important) {
+        li.classList.add("important-task");
+      }
+
       // Task name
       const span = document.createElement("span");
       span.textContent = task.name;
       if (task.done) span.classList.add("done"); 
       li.appendChild(span);
-
-      // Priority badge
-      if (task.priority && task.priority !== "") {
-        const priorityBadge = document.createElement("span");
-
-        // Icons for priority
-        const icons = { High: "🔺", Medium: "🔸", Low: "🔹" };
-        priorityBadge.textContent = icons[task.priority] || "";
-
-        // Apply both general and specific priority classes
-        priorityBadge.classList.add("priority", task.priority.toLowerCase());
-
-        li.appendChild(priorityBadge);
-      }
 
       // Due date/time
       if (task.date) {
@@ -158,32 +154,43 @@ function renderTasks() {
         const dueDateTime = new Date(y, m - 1, d, h, min);
 
         let formatted;
-if (dueDateTime.getFullYear() === now.getFullYear()) {
-  // If the task is in the current year, omit the year
-  formatted = dueDateTime.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-} else {
-  // Include year for future years
-  formatted = dueDateTime.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
+        if (dueDateTime.getFullYear() === now.getFullYear()) {
+      // If the task is in the current year, omit the year
+            formatted = dueDateTime.toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+          });
+        } else {
+      // Include year for future years
+          formatted = dueDateTime.toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+          });
+        }
 
 
         due.textContent = `⏰ ${formatted}`;
 
         // Highlight overdue / today / upcoming
-        if (!task.done && dueDateTime < now) due.classList.add("overdue");
-        else if (!task.done && sectionName === "Today") due.classList.add("due-today");
-        else if (!task.done && sectionName === "Upcoming") due.classList.add("upcoming");
+        if (!task.done && dueDateTime < now) {
+          due.classList.add("overdue");
+        } else if (!task.done && sectionName === "Today") {
+          due.classList.add("due-today");
+
+          if (task.important) {
+            const urgentTag = document.createElement("span");
+            urgentTag.textContent = "🔥Urgent";
+            urgentTag.classList.add("urgent-tag");
+            li.appendChild(urgentTag);
+          }
+        }  else if (!task.done && sectionName === "Upcoming") {
+          due.classList.add("upcoming");
+        }
 
         li.appendChild(due);
       }
@@ -214,4 +221,7 @@ function clearCompleted() {
   renderTasks();
 }
 
-// fix the priority icon issue 
+// fix tasks not turning to overdue unless theyre a day overdue
+// fix completed tasks not going to the bottom if important
+// Make important checkbox more appealing 
+ 

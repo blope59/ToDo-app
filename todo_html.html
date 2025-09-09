@@ -11,12 +11,9 @@
     <input id="taskInput" type="text" placeholder="Enter a new task">
     <input type="date" id="dateInput">
     <input type="time" id="timeInput">
-    <select id="priorityInput">
-      <option value="">No Priority</option>
-      <option vlaue="Low">Low</option>
-      <option value="Medium" selected>Medium</option>
-      <option value="High">High</option>
-    </select>
+    <label>
+      <input type="checkbox" id="importantInput">Important
+    </label>
     <button id="addTaskBtn" onclick="addTask()">Add Task</button>
     <button id="clearCompletedBtn" onclick="clearCompleted()">Clear Completed</button>
     

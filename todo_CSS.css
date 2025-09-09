@@ -34,21 +34,6 @@ li span {
   word-break: break-word;    /* wrap long tasks */
 }
 
-li span[data-priority="High"] { 
-  color: #b30000; 
-  font-weight: bold; 
-}   
-
-li span[data-priority="Medium"] { 
-  color: #b37400; 
-  font-weight: bold; 
-} 
-
-li span[data-priority="Low"] { 
-  color: #00796b; 
-  font-weight: bold; 
-}    
-
 li .button-group {
   display: flex;             /* group buttons together */
   gap: 5px;                  /* space between buttons */
@@ -138,28 +123,28 @@ button#addTaskBtn:hover {
 
 .due-today {
   background-color: #fff2cc;  /* light yellow */
-  color: #b37400;
+  color: #795100;
   font-weight: bold;
 }
 h3.today {
   background-color: #fff2cc; /* light yellow */
-  color: #b37400;
+  color: #b30000;
   font-weight: bold;
   padding: 6px 10px;
   border-radius: 6px;
 }
 
 h3.tomorrow {
-  background-color: #e0f7fa; /* soft teal */
-  color: #00796b;
+  background-color: #b7ffb2; /* soft teal */
+  color: #004840;
   font-weight: bold;
   padding: 6px 10px;
   border-radius: 6px;
 }
 
 h3.upcoming {
-  background-color: #f0f0f0; 
-  color: #555;
+  background-color: #b7ffb2; 
+  color: #343232;
   font-weight: bold;
   padding: 6px 10px;
   border-radius: 6px;
@@ -193,7 +178,7 @@ h3.no-date {
 
 /* Upcoming tasks highlight inside list */
 .due-date.upcoming {
-  background-color: #d9f0ff;
+  background-color: #d2edff;
   color: #005b99;
   font-weight: bold;
 }
@@ -206,28 +191,20 @@ h3.overdue {
   border-radius: 6px;
 }
 
-.priority {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  font-size: 0.9em;
+li.important-task {
+  border: 2px solid #ff9900;
+  background-color: #ffdddd;
+  box-shadow: 0 4px 8px  rgba(255, 153, 0, 0.338);
+}
+
+.urgent-tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.85em;
   font-weight: bold;
-  border-radius: 50%;   /* makes it circular */
-  width: 22px;
-  height: 22px;
+  background-color: #ff4d4d; /* bright red */
   color: white;
+  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.3);
 }
-
-.priority.low {
-  background-color: #4CAF50; /* green */
-}
-
-.priority.medium {
-  background-color: #FF9800; /* orange */
-}
-
-.priority.high {
-  background-color: #F44336; /* red */
-}
-
