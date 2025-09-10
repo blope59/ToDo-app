@@ -25,7 +25,7 @@ function addTask() {
   }
 
   tasks.push({
-    id: crypto.randomUUID(),    // optional unique ID for future features
+    id: crypto.randomUUID(),
     name: input.value.trim(),
     date: dateInput.value || null,
     time: timeInput.value || null,
@@ -58,6 +58,10 @@ function renderTasks() {
   const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
 
+  const filter = document.getElementById("filterSelect")
+    ? document.getElementById("filterSelect").value
+    : "all";
+
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfTomorrow = new Date(startOfToday);
@@ -73,43 +77,40 @@ function renderTasks() {
     "No Date": []
   };
 
-  // Sort tasks: incomplete first, then complete, then by date
+  // Sorting: undone first, important prioritized, done last
   const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.done && !b.done) return 1;
+    if (!a.done && b.done) return -1;
 
     if (a.important && !b.important) return -1;
     if (!a.important && b.important) return 1;
 
-    if (a.done && !b.done) return 1;
-    if (!a.done && b.done) return -1;
-
     if (a.date && b.date) {
-      const [yA, mA, dA] = a.date.split("-").map(Number);
-      const [hA, minA] = (a.time || "00:00").split(":").map(Number);
-      const dateA = new Date(yA, mA - 1, dA, hA, minA);
-
-      const [yB, mB, dB] = b.date.split("-").map(Number);
-      const [hB, minB] = (b.time || "00:00").split(":").map(Number);
-      const dateB = new Date(yB, mB - 1, dB, hB, minB);
-
+      const dateA = new Date(`${a.date}T${a.time || "00:00"}`);
+      const dateB = new Date(`${b.date}T${b.time || "00:00"}`);
       return dateA - dateB;
     }
-
     if (a.date) return -1;
     if (b.date) return 1;
-
     return 0;
   });
 
+  // Apply filter
+  const filteredTasks = sortedTasks.filter(task => {
+    if (filter === "active") return !task.done;
+    if (filter === "completed") return task.done;
+    if (filter === "important") return task.important;
+    return true; // "all"
+  });
+
   // Group tasks
-  sortedTasks.forEach((task) => {
+  filteredTasks.forEach((task) => {
     if (!task.date) {
       sections["No Date"].push(task);
     } else {
-      const [y, m, d] = task.date.split("-").map(Number);
-      const [h, min] = (task.time || "00:00").split(":").map(Number);
-      const taskDate = new Date(y, m - 1, d, h, min);
+      const taskDate = new Date(`${task.date}T${task.time || "00:00"}`);
 
-      if (!task.done && taskDate < startOfToday) {
+      if (!task.done && taskDate < now) {
         sections["Overdue"].push(task);
       } else if (taskDate >= startOfToday && taskDate < startOfTomorrow) {
         sections["Today"].push(task);
@@ -132,16 +133,12 @@ function renderTasks() {
 
     sections[sectionName].forEach(task => {
       const li = document.createElement("li");
-
-      // Highlight important
-      if (task.important) {
-        li.classList.add("important-task");
-      }
+      if (task.important) li.classList.add("important-task");
 
       // Task name
       const span = document.createElement("span");
       span.textContent = task.name;
-      if (task.done) span.classList.add("done"); 
+      if (task.done) span.classList.add("done");
       li.appendChild(span);
 
       // Due date/time
@@ -149,46 +146,28 @@ function renderTasks() {
         const due = document.createElement("span");
         due.classList.add("due-date");
 
-        const [y, m, d] = task.date.split("-").map(Number);
-        const [h, min] = (task.time || "00:00").split(":").map(Number);
-        const dueDateTime = new Date(y, m - 1, d, h, min);
-
-        let formatted;
-        if (dueDateTime.getFullYear() === now.getFullYear()) {
-      // If the task is in the current year, omit the year
-            formatted = dueDateTime.toLocaleString([], {
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit"
-          });
-        } else {
-      // Include year for future years
-          formatted = dueDateTime.toLocaleString([], {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit"
-          });
-        }
-
+        const dueDateTime = new Date(`${task.date}T${task.time || "00:00"}`);
+        let formatted = dueDateTime.toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          year: dueDateTime.getFullYear() === now.getFullYear() ? undefined : "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
 
         due.textContent = `⏰ ${formatted}`;
 
-        // Highlight overdue / today / upcoming
         if (!task.done && dueDateTime < now) {
           due.classList.add("overdue");
         } else if (!task.done && sectionName === "Today") {
           due.classList.add("due-today");
-
           if (task.important) {
             const urgentTag = document.createElement("span");
             urgentTag.textContent = "🔥Urgent";
             urgentTag.classList.add("urgent-tag");
             li.appendChild(urgentTag);
           }
-        }  else if (!task.done && sectionName === "Upcoming") {
+        } else if (!task.done && sectionName === "Upcoming") {
           due.classList.add("upcoming");
         }
 
@@ -215,11 +194,13 @@ function renderTasks() {
   });
 }
 
+
 function clearCompleted() {
   tasks = tasks.filter(task => !task.done);
   saveTasks();
   renderTasks();
 }
+
 
 // fix tasks not turning to overdue unless theyre a day overdue
 // fix completed tasks not going to the bottom if important

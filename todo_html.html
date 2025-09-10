@@ -11,12 +11,25 @@
     <input id="taskInput" type="text" placeholder="Enter a new task">
     <input type="date" id="dateInput">
     <input type="time" id="timeInput">
-    <label>
-      <input type="checkbox" id="importantInput">Important
+
+    <!--important toggle-->
+    <label class="important-toggle">
+      <input type="checkbox" id="importantInput">
+      <span>⭐ Important</span>
     </label>
+
     <button id="addTaskBtn" onclick="addTask()">Add Task</button>
     <button id="clearCompletedBtn" onclick="clearCompleted()">Clear Completed</button>
-    
+  </div>
+
+  <div>
+    <label for="filterSelect">Show: </label>
+    <select id="filterSelect" onchange="renderTasks()">
+      <option value="all">All</option>
+      <option value="active">Active</option>
+      <option value="completed">Completed</option>
+      <option value="important">Important</option>
+    </select>
   </div>
 
   <ul id="taskList"></ul>

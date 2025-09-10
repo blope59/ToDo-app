@@ -23,20 +23,20 @@ li {
   margin: 8px 0;
   border-radius: 6px;
   display: flex;
-  align-items: center;       /* center vertically */
-  justify-content: space-between; /* task on left, buttons on right */
+  align-items: center;
+  justify-content: space-between;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 li span {
-  flex: 1;                  /* task text takes remaining space */
-  margin-right: 10px;       /* space between text and buttons */
-  word-break: break-word;    /* wrap long tasks */
+  flex: 1;
+  margin-right: 10px;
+  word-break: break-word;
 }
 
 li .button-group {
-  display: flex;             /* group buttons together */
-  gap: 5px;                  /* space between buttons */
+  display: flex;
+  gap: 5px;
 }
 
 .done {
@@ -45,12 +45,11 @@ li .button-group {
 }
 
 li .button-group button {
-  width: 80px;        /* same width for all buttons */
-  padding: 5px 0;     /* vertical padding */
+  width: 80px;
+  padding: 5px 0;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  text-align: center; /* center text inside button */
   font-weight: bold;
   transition: opacity 0.2s, transform 0.1s;
 }
@@ -60,143 +59,100 @@ li .button-group button:hover {
   transform: scale(1.05);
 }
 
-/* Colors for Complete and Delete buttons */
+/* Complete & Delete button colors */
 li .button-group button:nth-child(1) {
-  background-color: #4CAF50; /* Complete button */
+  background-color: #4CAF50;
   color: white;
 }
 
 li .button-group button:nth-child(2) {
-  background-color: #f44336; /* Delete button */
+  background-color: #f44336;
   color: white;
 }
 
 /* Input and add button */
 #inputContainer {
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-    margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-#taskInput {
-  flex: 1;
+#taskInput, #dateInput, #timeInput {
   padding: 8px 10px;
   font-size: 16px;
   border-radius: 4px;
   border: 1px solid #ccc;
 }
 
-button#addTaskBtn {
-  width: 100px;
-  padding: 8px 0;
-  margin-left: 10px;
+button#addTaskBtn, #clearCompletedBtn {
+  padding: 8px 12px;
   border: none;
   border-radius: 4px;
-  background-color: #2196F3;
-  color: white;
   font-weight: bold;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
 }
 
-button#addTaskBtn:hover {
+button#addTaskBtn {
+  background-color: #2196F3;
+  color: white;
+}
+button#addTaskBtn:hover,
+#clearCompletedBtn:hover {
   opacity: 0.85;
   transform: scale(1.05);
 }
 
+#clearCompletedBtn {
+  background-color: #FF9800;
+  color: white;
+}
+
+/* Due date styling */
 .due-date {
   display: inline-block;
   margin-left: 8px;
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.85em;
-  background-color: #eef2ff;  /* soft highlight */
+  background-color: #eef2ff;
   color: #333;
 }
-
 .overdue {
   background-color: #ffe4e4;
   color: #b30000;
   font-weight: bold;
 }
-
 .due-today {
-  background-color: #fff2cc;  /* light yellow */
+  background-color: #fff2cc;
   color: #795100;
   font-weight: bold;
 }
-h3.today {
-  background-color: #fff2cc; /* light yellow */
-  color: #b30000;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-h3.tomorrow {
-  background-color: #b7ffb2; /* soft teal */
-  color: #004840;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-h3.upcoming {
-  background-color: #b7ffb2; 
-  color: #343232;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-h3.no-date {
-  background-color: #f9f9f9; 
-  color: #666;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-/* Clear Completed button styling */
-#clearCompletedBtn {
-  width: 140px;
-  padding: 8px 0;
-  border: none;
-  border-radius: 4px;
-  background-color: #FF9800; 
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-
-#clearCompletedBtn:hover {
-  opacity: 0.85;
-  transform: scale(1.05);
-}
-
-/* Upcoming tasks highlight inside list */
 .due-date.upcoming {
   background-color: #d2edff;
   color: #005b99;
   font-weight: bold;
 }
 
-h3.overdue {
-  background-color: #ffe4e4;
-  color: #b30000;
-  font-weight: bold;
+/* Section headers */
+h3 {
   padding: 6px 10px;
   border-radius: 6px;
+  font-weight: bold;
 }
+h3.overdue { background: #ffe4e4; color: #b30000; }
+h3.today { background: #fff2cc; color: #b30000; }
+h3.tomorrow { background: #b7ffb2; color: #004840; }
+h3.upcoming { background: #b7ffb2; color: #343232; }
+h3.no-date { background: #f9f9f9; color: #666; }
 
+/* Important task style */
 li.important-task {
   border: 2px solid #ff9900;
-  background-color: #ffdddd;
-  box-shadow: 0 4px 8px  rgba(255, 153, 0, 0.338);
+  background-color: #fff4e1;
+  box-shadow: 0 4px 8px rgba(255, 153, 0, 0.3);
 }
-
 .urgent-tag {
   display: inline-block;
   margin-left: 10px;
@@ -204,7 +160,45 @@ li.important-task {
   border-radius: 6px;
   font-size: 0.85em;
   font-weight: bold;
-  background-color: #ff4d4d; /* bright red */
+  background-color: #ff4d4d;
   color: white;
-  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(255,0,0,0.3);
+}
+
+/* Fancy important toggle */
+.important-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  user-select: none;
+}
+.important-toggle input {
+  display: none;
+}
+.important-toggle span {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #ddd;
+  transition: all 0.3s;
+}
+.important-toggle input:checked + span {
+  background: #ffcc00;
+  color: #000;
+  box-shadow: 0 0 10px #ffcc00;
+}
+
+/* Filter dropdown */
+#filterContainer {
+  margin: 10px 0 20px 0;
+  text-align: center;
+}
+
+#filterSelect {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #888;
+  font-size: 15px;
+  cursor: pointer;
 }
