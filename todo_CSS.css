@@ -26,6 +26,12 @@ li {
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background 0.2s, transform 0.2s;
+}
+
+li:hover {
+  background: #f9f9f9;
+  transform: scale(1.01);
 }
 
 li span {
@@ -42,6 +48,7 @@ li .button-group {
 .done {
   text-decoration: line-through;
   color: gray;
+  opacity: 0.7;
 }
 
 li .button-group button {
@@ -137,10 +144,13 @@ button#addTaskBtn:hover,
 
 /* Section headers */
 h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
   padding: 6px 10px;
   border-radius: 6px;
   font-weight: bold;
 }
+
 h3.overdue { background: #ffe4e4; color: #b30000; }
 h3.today { background: #fff2cc; color: #b30000; }
 h3.tomorrow { background: #b7ffb2; color: #004840; }
@@ -202,3 +212,4 @@ li.important-task {
   font-size: 15px;
   cursor: pointer;
 }
+

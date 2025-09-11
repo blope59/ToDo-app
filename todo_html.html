@@ -7,24 +7,25 @@
 </head>
 <body>
   <h1>To-Do List</h1>
+  
   <div id="inputContainer">
     <input id="taskInput" type="text" placeholder="Enter a new task">
     <input type="date" id="dateInput">
     <input type="time" id="timeInput">
 
-    <!--important toggle-->
+    <!-- important toggle -->
     <label class="important-toggle">
       <input type="checkbox" id="importantInput">
       <span>⭐ Important</span>
     </label>
 
-    <button id="addTaskBtn" onclick="addTask()">Add Task</button>
-    <button id="clearCompletedBtn" onclick="clearCompleted()">Clear Completed</button>
+    <button id="addTaskBtn">Add Task</button>
+    <button id="clearCompletedBtn">Clear Completed</button>
   </div>
 
-  <div>
+  <div id="filterContainer">
     <label for="filterSelect">Show: </label>
-    <select id="filterSelect" onchange="renderTasks()">
+    <select id="filterSelect">
       <option value="all">All</option>
       <option value="active">Active</option>
       <option value="completed">Completed</option>
@@ -37,3 +38,4 @@
   <script src="todo_js.js"></script>
 </body>
 </html>
+
