@@ -149,13 +149,25 @@ h3 {
   padding: 6px 10px;
   border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
+  position: relative;
 }
-
 h3.overdue { background: #ffe4e4; color: #b30000; }
 h3.today { background: #fff2cc; color: #b30000; }
 h3.tomorrow { background: #b7ffb2; color: #004840; }
 h3.upcoming { background: #b7ffb2; color: #343232; }
 h3.no-date { background: #f9f9f9; color: #666; }
+
+h3::after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  font-size: 0.8em;
+  transition: transform 0.3s;
+}
+h3.collapsed::after {
+  transform: rotate(-90deg);
+}
 
 /* Important task style */
 li.important-task {
@@ -204,7 +216,6 @@ li.important-task {
   margin: 10px 0 20px 0;
   text-align: center;
 }
-
 #filterSelect {
   padding: 6px 12px;
   border-radius: 6px;
@@ -213,3 +224,66 @@ li.important-task {
   cursor: pointer;
 }
 
+/* 🔍 Search bar */
+#searchContainer {
+  margin: 10px 0;
+  text-align: center;
+}
+#searchInput {
+  width: 80%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+/* ✏️ Edit mode */
+li.editing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #fdfdfd;
+  border: 2px solid #2196F3;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+li.editing input[type="text"],
+li.editing input[type="date"],
+li.editing input[type="time"] {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+li.editing label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+  background: #fff4cc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+li.editing button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+li.editing button:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+li.editing button:nth-of-type(1) {
+  background-color: #4CAF50;
+  color: white;
+}
+li.editing button:nth-of-type(2) {
+  background-color: #f44336;
+  color: white;
+}

@@ -1,17 +1,31 @@
 let tasks = [];
+let collapsedSections = {}; 
 
-// Load saved tasks on page load
+// Safe UUID generator with fallback
+function genId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+// Load saved tasks and collapsed sections
 window.onload = () => {
   const savedTasks = localStorage.getItem("tasks");
   if (savedTasks) {
-    tasks = JSON.parse(savedTasks);
-    renderTasks();
+    try { tasks = JSON.parse(savedTasks); } catch (e) { tasks = []; }
   }
+  const savedCollapsed = localStorage.getItem("collapsedSections");
+  if (savedCollapsed) {
+    try { collapsedSections = JSON.parse(savedCollapsed); } catch (e) { collapsedSections = {}; }
+  }
+  renderTasks();
 };
 
-// Save to localStorage
+// Save tasks & collapsed state
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+function saveCollapsed() {
+  localStorage.setItem("collapsedSections", JSON.stringify(collapsedSections));
 }
 
 // Add new task
@@ -21,13 +35,13 @@ function addTask() {
   const timeInput = document.getElementById("timeInput");
   const importantInput = document.getElementById("importantInput");
 
-  if (input.value.trim() === "") {
+  if (!input || input.value.trim() === "") {
     alert("Please enter a task name.");
     return;
   }
 
   tasks.push({
-    id: crypto.randomUUID(),
+    id: genId(),
     name: input.value.trim(),
     date: dateInput.value || null,
     time: timeInput.value || null,
@@ -35,6 +49,7 @@ function addTask() {
     done: false
   });
 
+  // reset inputs
   input.value = "";
   dateInput.value = "";
   timeInput.value = "";
@@ -54,7 +69,7 @@ function completeTask(id) {
   }
 }
 
-// Delete task
+// Delete
 function deleteTask(id) {
   if (!confirm("Are you sure you want to delete this task?")) return;
   tasks = tasks.filter(t => t.id !== id);
@@ -62,12 +77,99 @@ function deleteTask(id) {
   renderTasks();
 }
 
+// Edit (inline)
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  const taskList = document.getElementById("taskList");
+  const li = taskList.querySelector(`li[data-id="${id}"]`);
+  if (!li) return;
+
+  // clear and apply editing class
+  li.innerHTML = "";
+  li.classList.add("editing");
+
+  // Create inputs
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = task.name;
+
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.value = task.date || "";
+
+  const timeInput = document.createElement("input");
+  timeInput.type = "time";
+  timeInput.value = task.time || "";
+
+  const importantInput = document.createElement("input");
+  importantInput.type = "checkbox";
+  importantInput.checked = task.important;
+  const importantLabel = document.createElement("label");
+  importantLabel.textContent = "⭐ Important ";
+  importantLabel.appendChild(importantInput);
+
+  // Save & Cancel buttons
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save";
+  saveBtn.addEventListener("click", () => {
+    task.name = nameInput.value.trim() || task.name;
+    task.date = dateInput.value || null;
+    task.time = timeInput.value || null;
+    task.important = importantInput.checked;
+    li.classList.remove("editing");
+    saveTasks();
+    renderTasks();
+  });
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => {
+    li.classList.remove("editing");
+    renderTasks();
+  });
+
+  // append inputs & buttons
+  li.appendChild(nameInput);
+  li.appendChild(dateInput);
+  li.appendChild(timeInput);
+  li.appendChild(importantLabel);
+  li.appendChild(saveBtn);
+  li.appendChild(cancelBtn);
+
+  // focus and key handlers
+  nameInput.focus();
+
+  const allInputs = [nameInput, dateInput, timeInput];
+  // For checkbox we need keydown on the label or document; still include it
+  allInputs.forEach(el => {
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") saveBtn.click();
+      if (e.key === "Escape") cancelBtn.click();
+    });
+  });
+
+  // Make Enter/Escape also work on checkbox via keydown on li
+  li.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveBtn.click();
+    if (e.key === "Escape") cancelBtn.click();
+  });
+
+  // clicking the importance checkbox saves immediately
+  importantInput.addEventListener("change", () => saveBtn.click());
+}
+
 // Render tasks
 function renderTasks() {
   const taskList = document.getElementById("taskList");
+  if (!taskList) return;
   taskList.innerHTML = "";
 
-  const filter = document.getElementById("filterSelect").value;
+  const filterSelect = document.getElementById("filterSelect");
+  const filter = filterSelect ? filterSelect.value : "all";
+  const searchEl = document.getElementById("searchInput");
+  const searchText = searchEl ? searchEl.value.trim().toLowerCase() : "";
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -84,7 +186,7 @@ function renderTasks() {
     "No Date": []
   };
 
-  // Sorting
+  // Sort tasks: not-done first, important first, then date/time
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.done && !b.done) return 1;
     if (!a.done && b.done) return -1;
@@ -101,16 +203,17 @@ function renderTasks() {
     return 0;
   });
 
-  // Apply filter
+  // Apply filter + search
   const filteredTasks = sortedTasks.filter(task => {
-    if (filter === "active") return !task.done;
-    if (filter === "completed") return task.done;
-    if (filter === "important") return task.important;
-    return true; // "all"
+    if (filter === "active" && task.done) return false;
+    if (filter === "completed" && !task.done) return false;
+    if (filter === "important" && !task.important) return false;
+    if (searchText && !task.name.toLowerCase().includes(searchText)) return false;
+    return true;
   });
 
-  // Group tasks
-  filteredTasks.forEach((task) => {
+  // Group into sections
+  filteredTasks.forEach(task => {
     if (!task.date) {
       sections["No Date"].push(task);
     } else {
@@ -127,30 +230,40 @@ function renderTasks() {
     }
   });
 
-  // Render sections
+  // Render each section
   Object.keys(sections).forEach(sectionName => {
-    if (sections[sectionName].length === 0) return;
+    const list = sections[sectionName];
+    if (list.length === 0) return;
 
     const header = document.createElement("h3");
     header.textContent = sectionName;
     header.classList.add(sectionName.toLowerCase().replace(" ", "-"));
+    if (collapsedSections[sectionName]) header.classList.add("collapsed");
     taskList.appendChild(header);
 
-    sections[sectionName].forEach(task => {
+    header.addEventListener("click", () => {
+      collapsedSections[sectionName] = !collapsedSections[sectionName];
+      saveCollapsed();
+      renderTasks();
+    });
+
+    if (collapsedSections[sectionName]) return;
+
+    list.forEach(task => {
       const li = document.createElement("li");
+      li.setAttribute("data-id", task.id);
       if (task.important) li.classList.add("important-task");
 
-      // Task name
+      // name
       const span = document.createElement("span");
       span.textContent = task.name;
       if (task.done) span.classList.add("done");
       li.appendChild(span);
 
-      // Due date/time
+      // due
       if (task.date) {
         const due = document.createElement("span");
         due.classList.add("due-date");
-
         const dueDateTime = new Date(`${task.date}T${task.time || "00:00"}`);
         let formatted = dueDateTime.toLocaleString([], {
           month: "short",
@@ -159,7 +272,6 @@ function renderTasks() {
           hour: "numeric",
           minute: "2-digit"
         });
-
         due.textContent = `⏰ ${formatted}`;
 
         if (!task.done && dueDateTime < now) {
@@ -179,24 +291,40 @@ function renderTasks() {
         li.appendChild(due);
       }
 
-      // Buttons
+      // buttons
       const buttonGroup = document.createElement("div");
       buttonGroup.classList.add("button-group");
 
       const completeBtn = document.createElement("button");
       completeBtn.textContent = task.done ? "Undo" : "Complete";
-      completeBtn.addEventListener("click", () => completeTask(task.id));
+      completeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        completeTask(task.id);
+      });
       buttonGroup.appendChild(completeBtn);
 
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", () => deleteTask(task.id));
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteTask(task.id);
+      });
       buttonGroup.appendChild(deleteBtn);
 
       li.appendChild(buttonGroup);
       taskList.appendChild(li);
+
+      // dblclick anywhere on row (except buttons/inputs) to edit
+      li.addEventListener("dblclick", (e) => {
+        if (!e.target.closest("button") && !e.target.closest("input")) {
+          editTask(task.id);
+        }
+      });
     });
   });
+
+  // update progress for currently visible tasks
+  updateProgress(filteredTasks);
 }
 
 // Clear completed
@@ -206,14 +334,24 @@ function clearCompleted() {
   renderTasks();
 }
 
-// Event listeners
-document.getElementById("addTaskBtn").addEventListener("click", addTask);
-document.getElementById("clearCompletedBtn").addEventListener("click", clearCompleted);
-document.getElementById("filterSelect").addEventListener("change", renderTasks);
+// Event listeners (safe if elements don't exist yet)
+document.addEventListener("DOMContentLoaded", () => {
+  const addBtn = document.getElementById("addTaskBtn");
+  if (addBtn) addBtn.addEventListener("click", addTask);
 
-// Enter key to add task
-document.getElementById("taskInput").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") addTask();
+  const clearBtn = document.getElementById("clearCompletedBtn");
+  if (clearBtn) clearBtn.addEventListener("click", clearCompleted);
+
+  const filterSelect = document.getElementById("filterSelect");
+  if (filterSelect) filterSelect.addEventListener("change", renderTasks);
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.addEventListener("input", renderTasks);
+
+  const mainTaskInput = document.getElementById("taskInput");
+  if (mainTaskInput) mainTaskInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addTask();
+  });
 });
 
-// add double click to edit task 
+// add reapeatable tasks in the future 
